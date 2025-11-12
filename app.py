@@ -11,7 +11,7 @@ import torch
 # -------------------------------------------------------------------------
 # Configuration
 # -------------------------------------------------------------------------
-MODEL_PATH = Path(r"C:\Users\Vinod\OneDrive\Desktop\crop_disease_app\tomato_disease_model.pkl")
+MODEL_PATH = Path("tomato_disease_model.pkl")
 
 # -------------------------------------------------------------------------
 # Load Model
