@@ -1,0 +1,5 @@
+streamlit
+fastai
+torch
+matplotlib
+Pillow
