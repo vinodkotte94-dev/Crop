@@ -80,8 +80,9 @@ from fastai.vision.all import *
 import streamlit as st
 from pathlib import Path
 
-
 MODEL_PATH = Path("final_model.pkl")
+learn = load_learner(MODEL_PATH, cpu=True)
+
 
 
 
