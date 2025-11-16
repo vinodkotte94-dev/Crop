@@ -1,33 +1,49 @@
-# -------------------------------------------------
-# FINAL FIX — Custom Unpickler that replaces WindowsPath with str
-# -------------------------------------------------
+# =========================================================
+# 100% FIX for FastAI PKL on Linux (Streamlit Cloud)
+# Handles WindowsPath + persistent IDs + storages
+# =========================================================
+
 import pickle
 import pathlib
+import torch
 
-class NoWindowsPathUnpickler(pickle.Unpickler):
+# ---- custom loader that handles WindowsPath + persistent IDs ----
+class SafeUnpickler(pickle.Unpickler):
     def find_class(self, module, name):
-        # If model contains WindowsPath → replace with string path
+        # Replace WindowsPath -> PosixPath
         if module == "pathlib" and name == "WindowsPath":
             return pathlib.PosixPath
         return super().find_class(module, name)
 
+    def persistent_load(self, pid):
+        """
+        Handle persistent IDs created by torch and FastAI.
+        """
+        if isinstance(pid, tuple) and pid[0] == 'storage':
+            _, storage_type, key, location, size = pid
+
+            # Allocate empty storage and return it
+            storage = torch.UntypedStorage(size)
+            return storage
+
+        raise pickle.UnpicklingError(f"Unsupported persistent load: {pid}")
+
 def safe_load_learner(fname):
     with open(fname, "rb") as f:
-        return NoWindowsPathUnpickler(f).load()
+        return SafeUnpickler(f).load()
 
 
-# -------------------------------------------------
-# Now import everything else
-# -------------------------------------------------
+# =========================================================
+# Now import FastAI + Streamlit
+# =========================================================
 from fastai.vision.all import *
 import streamlit as st
 from pathlib import Path
 
+
 MODEL_PATH = Path("model_clean.pkl")
 
-# -------------------------------------------------
-# Load model with SAFE loader
-# -------------------------------------------------
+
 @st.cache_resource
 def load_model():
     try:
@@ -38,9 +54,9 @@ def load_model():
         st.stop()
 
 
-# -------------------------------------------------
-# Cure Suggestion Logic
-# -------------------------------------------------
+# =========================================================
+# Cure suggestion function
+# =========================================================
 def get_cure_suggestion(disease_name: str):
     disease = disease_name.lower()
 
@@ -57,24 +73,25 @@ def get_cure_suggestion(disease_name: str):
         if key in disease:
             return cures[key]
 
-    return "⚠ Unknown disease. Dataset label may be incorrect."
+    return "⚠ Unknown disease."
 
 
-# -------------------------------------------------
+# =========================================================
 # Streamlit UI
-# -------------------------------------------------
+# =========================================================
 st.set_page_config(page_title="🌿 Crop Disease Identifier", layout="wide")
+
 st.title("🌿 Prompt-Based Crop Disease Identifier")
-st.markdown("### Identify plant leaf diseases using a FastAI Trained Model")
+st.markdown("### Identify plant leaf diseases using a FastAI trained model")
 
 learn = load_model()
 
 prompt = st.text_input("💬 Enter your prompt")
-uploaded = st.file_uploader("📸 Upload leaf image", type=["jpg", "jpeg", "png"])
+uploaded = st.file_uploader("📸 Upload a leaf image", type=["jpg", "jpeg", "png"])
 
 if uploaded and prompt:
     img = PILImage.create(uploaded)
-    st.image(img.to_thumb(400, 400), caption="Uploaded Leaf")
+    st.image(img.to_thumb(400, 400), caption="Uploaded Image")
 
     with st.spinner("🔍 Analyzing..."):
         pred_class, pred_idx, probs = learn.predict(img)
@@ -82,11 +99,11 @@ if uploaded and prompt:
     clean = str(pred_class).replace("_", " ").title()
 
     st.subheader("🩺 Prediction")
-    st.success(f"**Disease:** {clean}")
-    st.info(f"**Confidence:** {probs[pred_idx]:.2%}")
+    st.success(f"Disease: {clean}")
+    st.info(f"Confidence: {probs[pred_idx]:.2%}")
 
     st.subheader("💊 Cure Suggestion")
     st.markdown(get_cure_suggestion(clean))
 
 else:
-    st.warning("💡 Enter a prompt and upload an image to continue.")
+    st.warning("💡 Enter prompt & upload image to continue.")
