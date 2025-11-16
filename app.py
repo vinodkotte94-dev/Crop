@@ -1,33 +1,45 @@
 # -------------------------------------------------
-# FIX 1 — Apply WindowsPath → PosixPath BEFORE importing fastai
+# FINAL FIX — Custom Unpickler that replaces WindowsPath with str
 # -------------------------------------------------
+import pickle
 import pathlib
-pathlib.WindowsPath = pathlib.PosixPath
+
+class NoWindowsPathUnpickler(pickle.Unpickler):
+    def find_class(self, module, name):
+        # If model contains WindowsPath → replace with string path
+        if module == "pathlib" and name == "WindowsPath":
+            return pathlib.PosixPath
+        return super().find_class(module, name)
+
+def safe_load_learner(fname):
+    with open(fname, "rb") as f:
+        return NoWindowsPathUnpickler(f).load()
+
 
 # -------------------------------------------------
-# Now import fastai and others
+# Now import everything else
 # -------------------------------------------------
 from fastai.vision.all import *
 import streamlit as st
 from pathlib import Path
-from PIL import Image
 
 MODEL_PATH = Path("model_clean.pkl")
 
 # -------------------------------------------------
-# Load model safely
+# Load model with SAFE loader
 # -------------------------------------------------
 @st.cache_resource
 def load_model():
     try:
-        learn = load_learner(MODEL_PATH, cpu=True)
+        learn = safe_load_learner(MODEL_PATH)
         return learn
     except Exception as e:
         st.error(f"❌ Error loading model: {e}")
         st.stop()
 
+
 # -------------------------------------------------
-# Cure Suggestions
+# Cure Suggestion Logic
 # -------------------------------------------------
 def get_cure_suggestion(disease_name: str):
     disease = disease_name.lower()
@@ -46,6 +58,7 @@ def get_cure_suggestion(disease_name: str):
             return cures[key]
 
     return "⚠ Unknown disease. Dataset label may be incorrect."
+
 
 # -------------------------------------------------
 # Streamlit UI
