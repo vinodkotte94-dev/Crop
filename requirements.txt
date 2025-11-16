@@ -4,3 +4,8 @@ torch
 torchvision
 matplotlib
 pillow
+fastai==2.7.12
+fastapi==0.100.0
+uvicorn==0.23.1
+pillow==10.1.0
+starlette==0.27.1
