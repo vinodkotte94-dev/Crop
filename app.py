@@ -1,8 +1,8 @@
 # 🌿 Improved Prompt-Based Crop Disease Identifier using FastAI + Streamlit
+
 import pathlib
 # Convert WindowsPath to PosixPath so FastAI load works on Linux
 pathlib.WindowsPath = pathlib.PosixPath
-
 
 from fastai.vision.all import *
 import streamlit as st
