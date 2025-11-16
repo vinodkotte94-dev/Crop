@@ -79,22 +79,22 @@ def safe_load_learner(fname):
 from fastai.vision.all import *
 import streamlit as st
 from pathlib import Path
+from fastai.vision.all import *
+import streamlit as st
+from pathlib import Path
 
 MODEL_PATH = Path("final_model.pkl")
-learn = load_learner(MODEL_PATH, cpu=True)
-
-
-
 
 @st.cache_resource
 def load_model():
     try:
-        learn = safe_load_learner(MODEL_PATH)
+        learn = load_learner(MODEL_PATH, cpu=True)
         return learn
     except Exception as e:
         st.error(f"❌ Error loading model: {e}")
         st.stop()
 
+learn = load_model()
 
 # =========================================================
 # Cure suggestion function
