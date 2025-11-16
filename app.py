@@ -129,7 +129,7 @@ st.markdown("### Identify plant leaf diseases using a FastAI trained model")
 @st.cache_resource
 def load_model():
     try:
-        learn = load_fastai_model("model_clean.pkl")
+        learn = load_fastai_model("final_model.pkl")
         return learn
     except Exception as e:
         st.error(f"❌ Error loading model: {e}")
@@ -137,7 +137,7 @@ def load_model():
 @st.cache_resource
 def load_model():
     try:
-        learn = load_fastai_model("model_clean.pkl")
+        learn = load_fastai_model("final_model.pkl")
         return learn
     except Exception as e:
         st.error(f"❌ Error loading model: {e}")
