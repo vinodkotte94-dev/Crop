@@ -80,7 +80,7 @@ st.set_page_config(page_title="🌾 Crop Disease Identifier", layout="wide")
 st.title("🌿 Prompt-Based Crop Disease Identifier")
 st.markdown("### Identify plant leaf diseases using a trained FastAI model.")
 
-learn = load_model()
+learn = load_learner('model_clean.pkl', cpu=True)
 
 # User prompt input
 prompt = st.text_input("💬 Enter your prompt (e.g., 'Identify the disease in this tomato leaf')")
