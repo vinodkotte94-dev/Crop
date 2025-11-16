@@ -81,7 +81,8 @@ import streamlit as st
 from pathlib import Path
 
 
-MODEL_PATH = Path("model_clean.pkl")
+MODEL_PATH = Path("final_model.pkl")
+
 
 
 @st.cache_resource
