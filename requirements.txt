@@ -4,11 +4,10 @@ torch
 torchvision
 matplotlib
 pillow
-streamlit==1.29.0
+streamlit==1.31.1
 fastai==2.7.12
-torch==2.0.0
-torchvision==0.15.1
-pillow==9.5.0
-numpy==1.23.5
-packaging
+torch==2.1.0
+torchvision==0.16.0
+pillow
+numpy
 
