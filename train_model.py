@@ -23,8 +23,9 @@ def main():
     learn.fine_tune(1)
 
     # Step 6: Export the model
-    learn.export('model.pkl')
-    print("✅ Model exported as model.pkl")
+    learn.export(fname='tomato_disease_model.pkl', pickle_module=pickle, pickle_protocol=4)
+    
+    print("✅ Model exported as tomato_disease_model.pkl")
 
 if __name__ == "__main__":
     main()
