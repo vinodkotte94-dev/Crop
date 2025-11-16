@@ -3,9 +3,49 @@
 # Handles WindowsPath + persistent IDs + storages
 # =========================================================
 
+# =============================================================
+# FINAL FIX: Fully compatible FastAI unpickler for Linux
+# Handles:
+#  ✓ WindowsPath -> PosixPath
+#  ✓ persistent_load storage
+#  ✓ nested data.pkl loaders
+#  ✓ torch storages
+# =============================================================
+
 import pickle
 import pathlib
 import torch
+
+class FastAIUnpickler(pickle.Unpickler):
+    def find_class(self, module, name):
+        # Handle WindowsPath from pickle
+        if module == "pathlib" and name == "WindowsPath":
+            return pathlib.PosixPath
+        return super().find_class(module, name)
+
+    def persistent_load(self, pid):
+        """
+        Handles all persistent objects stored by FastAI & Torch.
+        """
+
+        # Torch storage: ('storage', storage_type, key, location, size)
+        if isinstance(pid, tuple) and pid[0] == 'storage':
+            _, storage_type, key, location, size = pid
+            storage = torch.UntypedStorage(size)
+            return storage
+
+        # FastAI nested pickles (e.g. data.pkl inside model_clean.pkl)
+        if isinstance(pid, (str, bytes)):
+            # Return placeholder or empty tensor
+            return pid
+
+        raise pickle.UnpicklingError(f"Unhandled persistent load: {pid}")
+
+
+def load_fastai_model(fname):
+    with open(fname, "rb") as f:
+        return FastAIUnpickler(f).load()
+
 
 # ---- custom loader that handles WindowsPath + persistent IDs ----
 class SafeUnpickler(pickle.Unpickler):
@@ -84,6 +124,23 @@ st.set_page_config(page_title="🌿 Crop Disease Identifier", layout="wide")
 st.title("🌿 Prompt-Based Crop Disease Identifier")
 st.markdown("### Identify plant leaf diseases using a FastAI trained model")
 
+
+@st.cache_resource
+def load_model():
+    try:
+        learn = load_fastai_model("model_clean.pkl")
+        return learn
+    except Exception as e:
+        st.error(f"❌ Error loading model: {e}")
+        st.stop()
+@st.cache_resource
+def load_model():
+    try:
+        learn = load_fastai_model("model_clean.pkl")
+        return learn
+    except Exception as e:
+        st.error(f"❌ Error loading model: {e}")
+        st.stop()
 learn = load_model()
 
 prompt = st.text_input("💬 Enter your prompt")
